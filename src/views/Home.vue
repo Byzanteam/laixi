@@ -1,18 +1,21 @@
 <template>
-  <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-  </div>
+  <div class="home"></div>
 </template>
 
 <script>
-// @ is an alias to /src
-import HelloWorld from '@/components/HelloWorld.vue'
+import api from '@/api/api'
 
 export default {
-  name: 'Home',
-  components: {
-    HelloWorld
+  data() {
+    return {
+      tableID: 1
+    }
+  },
+  mounted() {
+    document.title = '莱西联保户'
+    api.getFormAPI(this.tableID).then((res) => {
+      console.log(res)
+    })
   }
 }
 </script>
