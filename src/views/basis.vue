@@ -20,20 +20,84 @@
           </div>
 
           <div class="radio-text" v-else-if="field.type === 'Field::RadioButton'">
-            <van-field required :label="field.title">
-              <template #input>
-                <van-radio-group :id="field['identity_key']" direction="horizontal" v-model="field['option_id']">
-                  <div :key="option.id" v-for="option in field.options">
-                    <van-radio :name="option.id" checked-color="#00A862">{{ option.value }}</van-radio>
-                  </div>
-                </van-radio-group>
-              </template>
-            </van-field>
+            <div v-if="field.identity_key === 'type'">
+              <van-field required :label="field.title">
+                <template #input>
+                  <van-radio-group :id="field.identity_key" direction="horizontal" v-model="field.option_id">
+                    <div :key="option.id" v-for="option in field.options">
+                      <van-radio :name="option.id" @click="chooseType(option)" checked-color="#00A862">
+                        {{ option.value }}
+                      </van-radio>
+                    </div>
+                  </van-radio-group>
+                </template>
+              </van-field>
+            </div>
+            <div v-else-if="field.identity_key === 'special'" v-show="specialValue">
+              <van-field required :label="field.title">
+                <template #input>
+                  <van-radio-group :id="field.identity_key" direction="horizontal" v-model="field.option_id">
+                    <div :key="option.id" v-for="option in field.options">
+                      <van-radio :name="option.id" checked-color="#00A862">
+                        {{ option.value }}
+                      </van-radio>
+                    </div>
+                  </van-radio-group>
+                </template>
+              </van-field>
+            </div>
+            <div v-else-if="field.identity_key === 'focus'" v-show="focusValue">
+              <van-field required :label="field.title">
+                <template #input>
+                  <van-radio-group :id="field.identity_key" direction="horizontal" v-model="field.option_id">
+                    <div :key="option.id" v-for="option in field.options">
+                      <van-radio :name="option.id" checked-color="#00A862">
+                        {{ option.value }}
+                      </van-radio>
+                    </div>
+                  </van-radio-group>
+                </template>
+              </van-field>
+            </div>
+            <div v-else>
+              <van-field required :label="field.title">
+                <template #input>
+                  <van-radio-group :id="field.identity_key" direction="horizontal" v-model="field.option_id">
+                    <div :key="option.id" v-for="option in field.options">
+                      <van-radio :name="option.id" checked-color="#00A862">{{ option.value }}</van-radio>
+                    </div>
+                  </van-radio-group>
+                </template>
+              </van-field>
+            </div>
+          </div>
+          <!-- 级联 -->
+          <div class="input_text cascade" v-else-if="field.type === 'Field::CascadedSelect'">
+            <p v-if="field.identity_key == 'grid'">
+              <van-field
+                required
+                placeholder="点击选择房号"
+                :id="field.identity_key"
+                :label="field.title"
+                :value="field.cascadeValue"
+                @click="showPickerCascadeWorking = true"
+                clickable
+                readonly
+              />
+              <van-popup position="bottom" round v-model="showPickerCascadeWorking">
+                <van-picker
+                  :columns="field.columnsCe"
+                  @cancel="showPickerCascadeWorking = false"
+                  @confirm="onWorkingConfirm"
+                  show-toolbar
+                />
+              </van-popup>
+            </p>
           </div>
         </div>
       </aside>
 
-      <footer @click="newTable(formData)" class="footer">
+      <footer @click="submitForm(formData)" class="footer">
         提交
       </footer>
     </div>
@@ -49,18 +113,53 @@ export default {
     return {
       title: '',
       tableID: 5,
-      fields: [],
-      formData: []
+      formData: [],
+      specialValue: false,
+      focusValue: false,
+      showPickerCascadeWorking: false
     }
   },
-  create() {},
   mounted() {
-    document.title = '莱西联保户'
+    document.title = '莱西联保户人群'
     api.getFormAPI(this.tableID).then((res) => {
-      console.log(res)
       this.title = res.data.title
       this.formData = total.ListData(res.data.fields)
     })
+  },
+  methods: {
+    // 级联
+    onWorkingConfirm(cascadeValue, index) {
+      this.formData.forEach((element) => {
+        if (element.identity_key === 'grid') {
+          let cascade = element.columnsCe[index[0]].children[index[1]].children[index[2]]
+          element.choice_id = cascade.id
+          element.cascadeValue = cascadeValue.join('-')
+          element.value = cascade.text
+        }
+      })
+      this.showPickerCascadeWorking = false
+    },
+    chooseType(option) {
+      if (option.value === '重点人群') {
+        this.focusValue = true
+        this.specialValue = false
+      } else {
+        this.focusValue = false
+        this.specialValue = true
+      }
+    },
+    submitForm(formData) {
+      console.log(formData)
+      const userID = 1
+      const payload = total.payloadBuildTable(formData, userID)
+      api.postFormAPI(this.tableID, payload).then((res) => {
+        if (res.status === 201) {
+          this.$toast('新建成功 ✨')
+        } else {
+          this.$toast('新建失败 >_<')
+        }
+      })
+    }
   }
 }
 </script>
