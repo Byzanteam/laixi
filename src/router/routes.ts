@@ -5,9 +5,9 @@ export default [
     component: () => import(/* webpackChunkName:'home' */ '@/views/home.vue')
   },
   {
-    path: '/laixi/about',
-    name: 'about',
-    component: () => import(/* webpackChunkName:'about' */ '@/views/about.vue')
+    path: '/laixi/basis',
+    name: 'basis',
+    component: () => import(/* webpackChunkName:'basis' */ '@/views/basis.vue')
   },
   {
     path: '*',
