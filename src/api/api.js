@@ -16,5 +16,9 @@ export default {
   // 渲染表单
   getFormAPI(formID) {
     return http.get(`/api/v4/forms/${formID}`, '', headerV4)
+  },
+  // 发送数据
+  postFormAPI(formID, data) {
+    return http.post(`/api/v4/forms/${formID}/responses`, data, headerV4)
   }
 }

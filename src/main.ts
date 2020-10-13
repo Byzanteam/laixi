@@ -11,8 +11,10 @@ new Vue({
   render: (h) => h(App)
 }).$mount('#app')
 
-import { Radio, RadioGroup, Field, Icon } from 'vant'
+import { Radio, RadioGroup, Field, Icon, Picker, Popup } from 'vant'
 Vue.use(Radio)
 Vue.use(Field)
 Vue.use(Icon)
 Vue.use(RadioGroup)
+Vue.use(Picker)
+Vue.use(Popup)
