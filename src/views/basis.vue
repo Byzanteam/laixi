@@ -20,7 +20,7 @@
           </div>
 
           <div class="radio-text" v-else-if="field.type === 'Field::RadioButton'">
-            <div v-if="field.identity_key === 'type'">
+            <div v-if="field.identity_key === 'LianCategory'">
               <van-field required :label="field.title">
                 <template #input>
                   <van-radio-group :id="field.identity_key" direction="horizontal" v-model="field.option_id">
@@ -33,7 +33,7 @@
                 </template>
               </van-field>
             </div>
-            <div v-else-if="field.identity_key === 'special'" v-show="specialValue">
+            <div v-else-if="field.identity_key === 'LianSpeGroup'" v-show="specialValue">
               <van-field required :label="field.title">
                 <template #input>
                   <van-radio-group :id="field.identity_key" direction="horizontal" v-model="field.option_id">
@@ -46,7 +46,7 @@
                 </template>
               </van-field>
             </div>
-            <div v-else-if="field.identity_key === 'focus'" v-show="focusValue">
+            <div v-else-if="field.identity_key === 'LianImpGroup'" v-show="focusValue">
               <van-field required :label="field.title">
                 <template #input>
                   <van-radio-group :id="field.identity_key" direction="horizontal" v-model="field.option_id">
@@ -73,7 +73,7 @@
           </div>
           <!-- 级联 -->
           <div class="input_text cascade" v-else-if="field.type === 'Field::CascadedSelect'">
-            <p v-if="field.identity_key == 'grid'">
+            <p v-if="field.identity_key == 'LianGrid'">
               <van-field
                 required
                 placeholder="点击选择房号"
@@ -130,7 +130,7 @@ export default {
     // 级联
     onWorkingConfirm(cascadeValue, index) {
       this.formData.forEach((element) => {
-        if (element.identity_key === 'grid') {
+        if (element.identity_key === 'LianGrid') {
           let cascade = element.columnsCe[index[0]].children[index[1]].children[index[2]]
           element.choice_id = cascade.id
           element.cascadeValue = cascadeValue.join('-')
