@@ -1,22 +1,69 @@
 <template>
   <div class="home">
-    <div class="content">
+    <van-loading type="spinner" v-show="loading" vertical class="loading">加载中...</van-loading>
+    <div class="content" v-show="!loading">
       <header>
         <h1 class="h1">{{ title }}</h1>
       </header>
       <aside class="aside">
         <div :key="field.identity_key" v-for="field in formData">
-          <div class="input-text" v-if="field.type === 'Field::TextField'">
+          <div v-if="field.type === 'Field::TextField'">
             <!-- 文本 -->
-            <van-field
-              required
-              :id="field.identity_key"
-              :label="field.title"
-              autocomplete="off"
-              placeholder="请输入"
-              type="text"
-              v-model="field.value"
-            />
+            <div v-if="field.identity_key === 'LianMember'" v-show="grid">
+              <van-field
+                class="input-text"
+                required
+                readonly
+                clickable
+                :label="field.title"
+                :value="field.value"
+                placeholder="选择党员"
+                @click="showPicker = true"
+              />
+              <van-popup v-model="showPicker" round position="bottom">
+                <van-picker show-toolbar :columns="columns" @cancel="showPicker = false" @confirm="onConfirm" />
+              </van-popup>
+            </div>
+            <div v-else-if="field.identity_key === 'LianPhone'">
+              <van-field
+                class="input-text"
+                required
+                @blur="isValidphone(field.value)"
+                :id="field.identity_key"
+                :label="field.title"
+                autocomplete="off"
+                placeholder="请输入"
+                maxlength="11"
+                type="text"
+                v-model="field.value"
+              />
+            </div>
+            <div v-else-if="field.identity_key === 'LianID'">
+              <van-field
+                @blur="isValidIDCard(field.value)"
+                class="input-text"
+                required
+                maxlength="18"
+                :id="field.identity_key"
+                :label="field.title"
+                autocomplete="off"
+                placeholder="请输入"
+                type="text"
+                v-model="field.value"
+              />
+            </div>
+            <div v-else>
+              <van-field
+                class="input-text"
+                required
+                :id="field.identity_key"
+                :label="field.title"
+                autocomplete="off"
+                placeholder="请输入"
+                type="text"
+                v-model="field.value"
+              />
+            </div>
           </div>
 
           <div class="radio-text" v-else-if="field.type === 'Field::RadioButton'">
@@ -59,6 +106,7 @@
                 </template>
               </van-field>
             </div>
+
             <div v-else>
               <van-field required :label="field.title">
                 <template #input>
@@ -76,7 +124,7 @@
             <p v-if="field.identity_key == 'LianGrid'">
               <van-field
                 required
-                placeholder="点击选择房号"
+                placeholder="点击选择网格"
                 :id="field.identity_key"
                 :label="field.title"
                 :value="field.cascadeValue"
@@ -96,7 +144,6 @@
           </div>
         </div>
       </aside>
-
       <footer @click="submitForm(formData)" class="footer">
         提交
       </footer>
@@ -116,22 +163,73 @@ export default {
       formData: [],
       specialValue: false,
       focusValue: false,
-      showPickerCascadeWorking: false
+      showPickerCascadeWorking: false, //级联弹框
+      showPicker: false, //单选弹框
+      columns: [], //党员选择
+      grid: '', //所属网格
+      loading: true,
+      isthroughPhone: false,
+      isthroughIDCard: false,
+      submitFormStatus: true //提交次数限制
     }
   },
+  watch: {
+    grid() {
+      let data = { sql: `SELECT * FROM sdqdlx_form_1_4 WHERE ("MemberGrid" ~ '${this.grid}')` }
+      if (this.grid) {
+        api.postSqlJsonAPI(data).then((res) => {
+          res.data.forEach((element) => {
+            this.columns.push(element.MemberName)
+          })
+        })
+      }
+    }
+  },
+
   mounted() {
     document.title = '莱西联保户人群'
     api.getFormAPI(this.tableID).then((res) => {
       this.title = res.data.title
       this.formData = total.ListData(res.data.fields)
+      this.loading = false
     })
   },
   methods: {
+    // * 校验手机号
+    // * @param {String} str 待验证的手机号
+    // * @return {Boolean} 正确返回true，否则返回false
+    isValidphone(str) {
+      if (!total.isValidphone(str)) {
+        this.$toast('📝 请输入正确手机号码～')
+        this.isthroughPhone = false
+      } else {
+        this.isthroughPhone = true
+      }
+    },
+    isValidIDCard(str) {
+      if (!total.isValidIDCard(str)) {
+        this.$toast('📝 请输入正确身份证号码～')
+        this.isthroughIDCard = false
+      } else {
+        this.isthroughIDCard = true
+      }
+    },
+    // 选择党员
+    onConfirm(value) {
+      this.formData.forEach((element) => {
+        if (element.identity_key === 'LianMember') {
+          element.value = value
+        }
+      })
+      this.showPicker = false
+    },
     // 级联
     onWorkingConfirm(cascadeValue, index) {
       this.formData.forEach((element) => {
         if (element.identity_key === 'LianGrid') {
           let cascade = element.columnsCe[index[0]].children[index[1]].children[index[2]]
+          this.grid = cascade.text
+          // 确定所在网格
           element.choice_id = cascade.id
           element.cascadeValue = cascadeValue.join('-')
           element.value = cascade.text
@@ -139,6 +237,7 @@ export default {
       })
       this.showPickerCascadeWorking = false
     },
+    // 切换人员 type
     chooseType(option) {
       if (option.value === '重点人群') {
         this.focusValue = true
@@ -148,17 +247,26 @@ export default {
         this.specialValue = true
       }
     },
+    // 提交表单
     submitForm(formData) {
-      console.log(formData)
-      const userID = 1
-      const payload = total.payloadBuildTable(formData, userID)
-      api.postFormAPI(this.tableID, payload).then((res) => {
-        if (res.status === 201) {
-          this.$toast('新建成功 ✨')
-        } else {
-          this.$toast('新建失败 >_<')
+      if (this.isthroughIDCard && this.isthroughPhone) {
+        const userID = 1
+        const payload = total.payloadBuildTable(formData, userID)
+        if (this.submitFormStatus) {
+          this.submitFormStatus = false
+          api.postFormAPI(this.tableID, payload).then((res) => {
+            if (res.status === 201) {
+              this.$toast('新建成功 ✨')
+              this.$router.go(0)
+            } else {
+              this.$toast('新建失败 >_<')
+            }
+            this.submitFormStatus = true
+          })
         }
-      })
+      } else {
+        this.$toast('请再次检查手机号或身份证号！❌')
+      }
     }
   }
 }
@@ -197,6 +305,17 @@ export default {
     top: 22px;
     font-size: 28px;
   }
+  .input-text {
+    /deep/ .van-field__control {
+      border: none;
+      outline: none;
+      color: #2e2e2e;
+      width: 100%;
+      line-height: 26px;
+      border-bottom: 1px solid rgba(97, 95, 108, 0.2);
+    }
+  }
+
   /deep/ .van-field {
     flex-direction: column;
     .van-field__label {
@@ -213,17 +332,6 @@ export default {
       color: #d3d3d3;
     }
 
-    .input-text {
-      .van-field__control {
-        border: none;
-        outline: none;
-        color: #2e2e2e;
-        width: 100%;
-        line-height: 26px;
-        border-bottom: 1px solid rgba(97, 95, 108, 0.2);
-      }
-    }
-
     .van-radio {
       height: 1.875rem;
       line-height: 1.875rem;
@@ -238,5 +346,9 @@ export default {
   color: #fff;
   background-color: #00a862;
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+}
+
+.loading {
+  margin-top: 40%;
 }
 </style>

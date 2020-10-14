@@ -15,7 +15,7 @@ const http = {
       method: 'get',
       url: url,
       params: params,
-      headers, // 权限
+      headers // 权限
     }
     // if (params) config.params = params
     return request(config)
@@ -24,7 +24,7 @@ const http = {
     const config = {
       method: 'post',
       url: url,
-      headers: headers,
+      headers: headers
     }
     if (params) config.data = params
     return request(config)
@@ -33,11 +33,11 @@ const http = {
     const config = {
       method: 'put',
       url: url,
-      headers: headers,
+      headers: headers
     }
     if (params) config.data = params
     return request(config)
-  },
+  }
 }
 // 导出
 export default http
