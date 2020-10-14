@@ -20,5 +20,9 @@ export default {
   // 发送数据
   postFormAPI(formID, data) {
     return http.post(`/api/v4/forms/${formID}/responses`, data, headerV4)
+  },
+  // 逆地址编码
+  baiduMapAPI(location) {
+    return http.get(`/v3/?ak=vZ2qzqpvBYXFibWK5oYnUaK52fWMlbwm&output=json&coordtype=wgs84ll&location=${location}`)
   }
 }
