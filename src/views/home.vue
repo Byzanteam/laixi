@@ -7,7 +7,7 @@
       <aside class="aside">
         <div :key="field.identity_key" v-for="field in formData">
           <div class="input_text" v-if="field.type === 'Field::TextField'">
-            <div v-if="field.identity_key === 'location'" class="location">
+            <div v-if="field.identity_key === 'VisitMark'" class="location">
               <!-- 文本 -->
               <h3>{{ field.title }}</h3>
               <div class="location-button">
@@ -19,7 +19,6 @@
               <!-- 文本 -->
               <van-field
                 required
-                error
                 :id="field.identity_key"
                 :label="field.title"
                 autocomplete="off"
@@ -32,17 +31,17 @@
         </div>
       </aside>
 
-      <footer @click="newTable(formData)" class="footer">
+      <footer class="footer">
         提交
       </footer>
     </div>
+    <button @click="getLocation()">点我</button>
   </div>
 </template>
-
+<script type="text/javascript" src="https://api.map.baidu.com/api?v=2.0&ak=vZ2qzqpvBYXFibWK5oYnUaK52fWMlbwm"></script>
 <script>
 import api from '@/api/api'
 import total from '@/api/total'
-
 export default {
   data() {
     return {
@@ -51,13 +50,26 @@ export default {
       formData: []
     }
   },
-  create() {},
+  created() {},
   mounted() {
     document.title = '莱西联保户'
     api.getFormAPI(this.tableID).then((res) => {
-      console.log(res)
       this.formData = total.ListData(res.data.fields)
     })
+  },
+  methods: {
+    getLocation() {
+      // 创建百度地理位置实例，代替 navigator.geolocation
+      var geolocation = new BMap.Geolocation()
+      geolocation.getCurrentPosition(function(e) {
+        if (this.getStatus() == BMAP_STATUS_SUCCESS) {
+          const location = [e.point.lat, e.point.lng]
+          api.baiduMapAPI(location).then((res) => [alert(res.data.result.formatted_address)])
+        } else {
+          alert('failed' + this.getStatus())
+        }
+      })
+    }
   }
 }
 </script>
@@ -93,7 +105,6 @@ export default {
   .van-cell--required::before {
     left: 0px;
     top: 22px;
-    color: #ee0a24;
     font-size: 28px;
   }
   /deep/ .van-field {
@@ -128,6 +139,13 @@ export default {
     padding: 20px;
     position: relative;
 
+    .van-icon-location::before {
+      position: absolute;
+      font-size: 14px;
+      top: -12px;
+      left: 20px;
+    }
+
     h3 {
       text-align: left;
       font-size: 18px;
@@ -157,7 +175,7 @@ export default {
       font-size: 0.7rem;
       cursor: pointer;
       min-width: 8em;
-      text-align: center;
+      text-align: left;
     }
   }
 }
