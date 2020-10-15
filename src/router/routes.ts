@@ -1,6 +1,6 @@
 export default [
   {
-    path: '/laixi',
+    path: '/laixi/home',
     name: 'home',
     component: () => import(/* webpackChunkName:'home' */ '@/views/home.vue')
   },
@@ -10,8 +10,13 @@ export default [
     component: () => import(/* webpackChunkName:'basis' */ '@/views/basis.vue')
   },
   {
+    path: '/laixi/code',
+    name: 'code',
+    component: () => import(/* webpackChunkName:'code' */ '@/login/code.vue')
+  },
+  {
     path: '*',
     name: '404',
-    component: () => import('@/views/home.vue')
+    component: () => import('@/views/404.vue')
   }
 ]

@@ -6,18 +6,45 @@
       </header>
       <aside class="aside">
         <div :key="field.identity_key" v-for="field in formData">
-          <div class="input_text" v-if="field.type === 'Field::TextField'">
-            <div v-if="field.identity_key === 'VisitMark'" class="location">
+          <div v-if="field.type === 'Field::TextField'">
+            <div v-if="field.identity_key === 'VisitMark'">
               <!-- 文本 -->
-              <h3>{{ field.title }}</h3>
-              <div class="location-button">
-                <span>点击定位</span>
-                <van-icon name="location"></van-icon>
+              <div class="location" v-show="locationShow">
+                <h3>{{ field.title }}</h3>
+                <div class="location-button" @click="getLocation(formData)">
+                  <span>点击定位</span>
+                  <van-icon name="location"></van-icon>
+                </div>
               </div>
+              <van-field
+                v-show="!locationShow"
+                readonly
+                required
+                :id="field.identity_key"
+                :label="field.title"
+                autocomplete="off"
+                type="text"
+                v-model="field.value"
+              />
+            </div>
+            <div v-else-if="field.identity_key === 'VisitLianName'">
+              <van-field
+                required
+                readonly
+                clickable
+                :label="field.title"
+                :value="field.value"
+                placeholder="选择联保户"
+                @click="showPicker = true"
+              />
+              <van-popup v-model="showPicker" round position="bottom">
+                <van-picker show-toolbar :columns="columns" @cancel="showPicker = false" @confirm="onConfirm" />
+              </van-popup>
             </div>
             <div v-else>
               <!-- 文本 -->
               <van-field
+                class="input-text"
                 required
                 :id="field.identity_key"
                 :label="field.title"
@@ -28,14 +55,19 @@
               />
             </div>
           </div>
+          <div v-if="field.identity_key === 'VisitDocu'">
+            <van-field required :label="field.title">
+              <template #input>
+                <van-uploader v-model="uploader" multiple :after-read="afterRead" />
+              </template>
+            </van-field>
+          </div>
         </div>
       </aside>
-
       <footer class="footer">
         提交
       </footer>
     </div>
-    <button @click="getLocation()">点我</button>
   </div>
 </template>
 <script type="text/javascript" src="https://api.map.baidu.com/api?v=2.0&ak=vZ2qzqpvBYXFibWK5oYnUaK52fWMlbwm"></script>
@@ -46,28 +78,100 @@ export default {
   data() {
     return {
       tableID: 1,
-      fields: [],
-      formData: []
+      formData: [],
+      uploader: [],
+      dataID: '',
+      uptoken: '',
+      locationShow: true,
+      showPicker: false,
+      columns: []
     }
   },
-  created() {},
   mounted() {
     document.title = '莱西联保户'
     api.getFormAPI(this.tableID).then((res) => {
       this.formData = total.ListData(res.data.fields)
     })
+    // 获取党员的联保户
+    let name = localStorage.getItem('user_name')
+    let data = { sql: `SELECT * FROM sdqdlx_form_1_5 WHERE ("LianMember" ~ '${name}')` }
+    api.postSqlJsonAPI(data).then((res) => {
+      res.data.forEach((element) => {
+        this.columns.push(element.LianName)
+      })
+    })
   },
   methods: {
-    getLocation() {
+    getLocation(formData, locationShow) {
+      this.$toast.loading({
+        message: '定位中...',
+        duration: 700,
+        forbidClick: true
+      })
+      this.locationShow = false
       // 创建百度地理位置实例，代替 navigator.geolocation
       var geolocation = new BMap.Geolocation()
       geolocation.getCurrentPosition(function(e) {
         if (this.getStatus() == BMAP_STATUS_SUCCESS) {
           const location = [e.point.lat, e.point.lng]
-          api.baiduMapAPI(location).then((res) => [alert(res.data.result.formatted_address)])
+          api.baiduMapAPI(location).then((res) => {
+            formData.forEach((el) => {
+              if (el.identity_key === 'VisitMark') {
+                el.value = res.data.result.formatted_address
+              }
+            })
+          })
         } else {
           alert('failed' + this.getStatus())
         }
+      })
+    },
+    // 选择联保户
+    onConfirm(value) {
+      this.formData.forEach((element) => {
+        if (element.identity_key === 'VisitLianName') {
+          element.value = value
+        }
+      })
+      this.showPicker = false
+    },
+    // 文件的上传
+    afterRead(file) {
+      api.getUptokenAPI().then((res) => {
+        console.log(res.data)
+        this.uptoken = res.data.uptoken
+        let formData = new FormData()
+        // 此时可以自行将文件上传至服务器
+        formData.append('file', file.file)
+        formData.append('token', this.uptoken)
+        formData.append('x:key', '1597796993541')
+        let data = formData
+        let headers = {
+          'content-type': false
+        }
+        api.postQiNiuApi(data, headers).then((res) => {
+          console.log(res)
+          if (res.status === 200) {
+            let payload = {
+              response: { entries_attributes: [] }
+            }
+            payload.response.entries_attributes.push({
+              field_id: 107,
+              value: '走访照片',
+              value_id: res.data.id
+            })
+            // 发请求上传图片
+            // api.putFormsAmendAPI(this.tableID, this.dataID, payload).then((res) => {
+            //   if (res.status === 200) {
+            //     this.$toast('上传成功 ✨')
+            //   } else {
+            //     this.$toast('上传失败 >_<')
+            //   }
+            // })
+          } else {
+            this.$toast('网络波动，请再试一次')
+          }
+        })
       })
     }
   }
@@ -107,6 +211,16 @@ export default {
     top: 22px;
     font-size: 28px;
   }
+
+  .input-text {
+    /deep/ .van-field__control {
+      border: none;
+      outline: none;
+      width: 100%;
+      line-height: 26px;
+      border-bottom: 1px solid rgba(97, 95, 108, 0.2);
+    }
+  }
   /deep/ .van-field {
     flex-direction: column;
 
@@ -121,14 +235,6 @@ export default {
       position: relative;
     }
 
-    .van-field__control {
-      border: none;
-      outline: none;
-      width: 100%;
-      line-height: 26px;
-      border-bottom: 1px solid rgba(97, 95, 108, 0.2);
-    }
-
     input::-webkit-input-placeholder {
       color: #d3d3d3;
     }
@@ -136,7 +242,7 @@ export default {
 
   .location {
     text-align: left;
-    padding: 20px;
+    padding: 10px 16px;
     position: relative;
 
     .van-icon-location::before {
@@ -158,7 +264,7 @@ export default {
     h3::before {
       position: absolute;
       left: 0px;
-      top: 22px;
+      top: 15px;
       color: #ee0a24;
       font-size: 28px;
       content: '*';
@@ -170,7 +276,7 @@ export default {
       background-color: rgba(97, 95, 108, 0.2);
       line-height: 1.6rem;
       padding: 0 0.75rem;
-      margin: 0.6rem 0;
+      margin: 0.4rem 0;
       color: #615f6c;
       font-size: 0.7rem;
       cursor: pointer;

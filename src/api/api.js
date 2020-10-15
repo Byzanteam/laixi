@@ -12,8 +12,8 @@ let headerSQL = {
 // admin
 export default {
   // 登录oauth
-  getMagnateOauthAPI() {
-    return http.get('/magnate/oauth')
+  postOauthTokenAPI(params) {
+    return http.post('/oauth/token', params)
   },
   getUserAPI(token) {
     return http.get(`/api/v1/user?access_token=` + token)
@@ -33,5 +33,14 @@ export default {
   // SQL查询
   postSqlJsonAPI(data) {
     return http.post(`/api/table_mappers/json_api/execute_sql`, data, headerSQL)
+  },
+  // 上传附件
+  getUptokenAPI() {
+    return http.get(`/api/v4/attachments/uptoken?purpose=` + 'create_responses', '', headerV4)
+  },
+  // 上传7牛
+  postQiNiuApi(data, headers) {
+    headers.Authorization = headerV4.Authorization
+    return http.post('https://up.qbox.me/', data, headers)
   }
 }
