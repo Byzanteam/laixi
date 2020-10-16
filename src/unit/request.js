@@ -76,7 +76,7 @@ service.interceptors.response.use(
           Toast('请填写完整信息~')
           break
         case 500:
-          // Toast('服务器繁忙')
+          Toast('服务器繁忙')
           break
         case 501:
           Toast('网络未实现')

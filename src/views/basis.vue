@@ -250,7 +250,7 @@ export default {
     // 提交表单
     submitForm(formData) {
       if (this.isthroughIDCard && this.isthroughPhone) {
-        const userID = 1
+        const userID = localStorage.getItem('user_id')
         const payload = total.payloadBuildTable(formData, userID)
         if (this.submitFormStatus) {
           this.submitFormStatus = false
@@ -274,12 +274,10 @@ export default {
 
 <style lang="less" scoped>
 .content {
-  width: 60vw;
-  min-width: 370px;
+  width: 88vw;
   margin: 0rem auto;
   background: #f6f6f6;
   padding: 1.25rem;
-
   .h1 {
     font-size: 21px;
     color: #2e2e2e;
@@ -293,7 +291,6 @@ export default {
   padding: 0.8rem 1.2rem;
   background-color: #fff;
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.3);
-
   .table_aside_select {
     width: 60%;
   }
@@ -315,7 +312,6 @@ export default {
       border-bottom: 1px solid rgba(97, 95, 108, 0.2);
     }
   }
-
   /deep/ .van-field {
     flex-direction: column;
     .van-field__label {
@@ -331,14 +327,12 @@ export default {
     input::-webkit-input-placeholder {
       color: #d3d3d3;
     }
-
     .van-radio {
       height: 1.875rem;
       line-height: 1.875rem;
     }
   }
 }
-
 .footer {
   margin-top: 1.25rem;
   border-radius: 2rem;
@@ -347,7 +341,6 @@ export default {
   background-color: #00a862;
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2);
 }
-
 .loading {
   margin-top: 40%;
 }

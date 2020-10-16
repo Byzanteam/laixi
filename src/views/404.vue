@@ -1,13 +1,14 @@
 <template>
   <div>
-    404
+    {{ message }}
   </div>
 </template>
 <script>
 export default {
   data() {
-    return {}
-  },
-  mounted() {}
+    return {
+      message: '404'
+    }
+  }
 }
 </script>

@@ -64,7 +64,7 @@
           </div>
         </div>
       </aside>
-      <footer class="footer">
+      <footer class="footer" @click="submitForm(formData)">
         提交
       </footer>
     </div>
@@ -84,7 +84,9 @@ export default {
       uptoken: '',
       locationShow: true,
       showPicker: false,
-      columns: []
+      columns: [],
+      submitFormStatus: true,
+      valueID: ''
     }
   },
   mounted() {
@@ -102,6 +104,28 @@ export default {
     })
   },
   methods: {
+    // 提交表单
+    submitForm(formData) {
+      const userID = localStorage.getItem('user_id')
+      const payload = total.payloadBuildTable(formData, userID)
+      payload.response.entries_attributes.push({
+        field_id: 107,
+        value: '走访照片',
+        value_id: this.valueID
+      })
+      if (this.submitFormStatus) {
+        this.submitFormStatus = false
+        api.postFormAPI(this.tableID, payload).then((res) => {
+          if (res.status === 201) {
+            this.$toast('新建成功 ✨')
+            this.$router.go(0)
+          } else {
+            this.$toast('新建失败 >_<')
+          }
+          this.submitFormStatus = true
+        })
+      }
+    },
     getLocation(formData, locationShow) {
       this.$toast.loading({
         message: '定位中...',
@@ -139,7 +163,9 @@ export default {
     afterRead(file) {
       api.getUptokenAPI().then((res) => {
         console.log(res.data)
-        this.uptoken = res.data.uptoken
+        // this.uptoken = res.data.uptoken
+        this.uptoken =
+          'A02msK5084aaUq-gB1MdVJnPnO9g2p9jD87oMMPg:Kxpebq6E6GY0jIitZ1SVyHhkq9U=:eyJzY29wZSI6InlxZnctYXR0YWNobWVudCIsInNhdmVLZXkiOiIxL2NyZWF0ZV9yZXNwb25zZXMvLTE2MDI4MTUxNTgtM2Q5MzNhNjdkNzAyNGNkMDliNjNhY2MyNzVhYjg4NWMtJCh4OmtleSkiLCJjYWxsYmFja1VybCI6Imh0dHA6Ly9seC53ZWIuY2R5b3VlLmNvbS9hdHRhY2htZW50cy5qc29uIiwiY2FsbGJhY2tCb2R5Ijoia2V5PSQoa2V5KVx1MDAyNm5hbWU9JChmbmFtZSlcdTAwMjZzaXplPSQoZnNpemUpXHUwMDI2bWltZV90eXBlPSQobWltZVR5cGUpIiwiZGVhZGxpbmUiOjE2MDI4MTg3NTgsImZzaXplTGltaXQiOjEwNDg1NzYwMCwidXBob3N0cyI6WyJodHRwOi8vdXAucWluaXUuY29tIiwiaHR0cDovL3VwbG9hZC5xaW5pdS5jb20iLCItSCB1cC5xaW5pdS5jb20gaHR0cDovLzE4My4xMzEuNy4zIl0sImdsb2JhbCI6ZmFsc2V9'
         let formData = new FormData()
         // 此时可以自行将文件上传至服务器
         formData.append('file', file.file)
@@ -152,22 +178,7 @@ export default {
         api.postQiNiuApi(data, headers).then((res) => {
           console.log(res)
           if (res.status === 200) {
-            let payload = {
-              response: { entries_attributes: [] }
-            }
-            payload.response.entries_attributes.push({
-              field_id: 107,
-              value: '走访照片',
-              value_id: res.data.id
-            })
-            // 发请求上传图片
-            // api.putFormsAmendAPI(this.tableID, this.dataID, payload).then((res) => {
-            //   if (res.status === 200) {
-            //     this.$toast('上传成功 ✨')
-            //   } else {
-            //     this.$toast('上传失败 >_<')
-            //   }
-            // })
+            this.valueID = res.data.id
           } else {
             this.$toast('网络波动，请再试一次')
           }
@@ -180,8 +191,7 @@ export default {
 
 <style lang="less" scoped>
 .content {
-  width: 60vw;
-  min-width: 370px;
+  width: 88vw;
   margin: 0rem auto;
   background: #f6f6f6;
   padding: 1.25rem;

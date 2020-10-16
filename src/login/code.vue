@@ -14,8 +14,8 @@ export default {
       code: '',
       token: '',
       path: '',
-      url: 'http://localhost:8080/laixi/code',
-      // url: 'http://lx.web.cdyoue.com/laixi/code',
+      // url: 'http://localhost:8080/laixi/code',
+      url: 'http://lx.web.cdyoue.com/laixi/code',
       client_id: 'dc645fe88b34d01845ba2b4db6c8e2118ff9e52d09c4f0d898532e13b233b0c2',
       client_secret: '7ad944b2da2c8a115b3bdbe571d7faf79424570a1fc132575c5fbd68a6f820a6'
     }

@@ -81,7 +81,6 @@ export default {
           objData.other_option = field.other_option
           break
         }
-
         case 'Field::CascadedSelect': {
           objData.field_id = field.id
           objData.identity_key = field.identity_key
@@ -173,7 +172,7 @@ export default {
     columns.forEach((columns) => {
       let children = []
       res.forEach((res) => {
-        let obj = {}
+        let obj = { text: '' }
         if (columns.id === res.parent_id) {
           obj.text = res.name
           obj.id = res.id
@@ -190,7 +189,7 @@ export default {
     children.forEach((children) => {
       let childrens = []
       res.forEach((res) => {
-        let obj = {}
+        let obj = { text: '' }
         if (children.id === res.parent_id) {
           obj.text = res.name
           obj.id = res.id
